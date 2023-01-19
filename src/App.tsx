@@ -1,25 +1,65 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import { v4 as uuid } from "uuid";
+import { List } from "./components/List";
+import { FilterState, ToDoItem } from "./types";
+import { AddItem } from "./components/AddItem"
+import { Filter } from "./components/Filter";
 
 function App() {
+  const [items, setItems] = useState<ToDoItem[]>([])
+  const [filterState, setFilterState] = useState<FilterState>(FilterState.ALL);
+
+  const filteredItems = () => {
+    if (filterState === FilterState.ALL) {
+      return items
+    }
+    if (filterState === FilterState.DONE) {
+      return items.filter(item => item.checked)
+    }
+    if (filterState === FilterState.UNDONE) {
+      return items.filter(item => !item.checked)
+    }
+    return items
+  }
+
+  const onChangeFilterState = (value: FilterState) => {
+    setFilterState(value);
+  }
+
+  const handleRemoveTask = (task: ToDoItem) => {
+    setItems(items.filter(item => task.id !== item.id))
+  }
+
+  const handleToggle = (task: ToDoItem) => {
+    const result = items.map(item => {
+      if (item.id === task.id) {
+        return {
+          ...item,
+          checked: !item.checked
+        }
+      }
+      return item
+    })
+    setItems(result);
+  }
+
+  const handleAddTask = (name: string) => {
+    const newTask = { id: uuid(), name, checked: false}
+    setItems([...items, newTask])
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+   <div>
+     <header>
+       <h1>ToDo List</h1>
+     </header>
+     <AddItem onAdd={handleAddTask}/>
+     <Filter onChange={onChangeFilterState}/>
+     {items.length
+       ? <List items={filteredItems()} onRemove={handleRemoveTask} onToggle={handleToggle}/>
+       : <p>Список задач пуст</p>
+     }
+   </div>
   );
 }
 
